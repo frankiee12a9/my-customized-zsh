@@ -155,8 +155,45 @@ set -o vi
 
 #------------ FUNCTION (start)
 
+# global exception 
 exception() {
-	echo "EXCEPTION: invalid arguments. Type `my_alias` for manuals."
+	local man="my_alias"
+	echo "EXCEPTION: invalid arguments. type $man for manuals."
+}
+
+# initialize maven project 
+mk_mvn() {
+  local group_id=$1 # com.thegreatapi.demolibrary
+  local artifact_id=$2
+  if [[ -n "$group_id" && -n "$artifact_id" ]]; then
+	  command mvn archetype:generate -DgroupId=$group_id -DartifactId=$artifact_id -DarchetypeArtifactId=maven-archetype-quickstart -DarchetypeVersion=1.4 -DinteractiveMode=false && cd $artifact_id && command mvn package
+  else
+	  exception
+  fi
+}
+
+# initialize React project with template
+mk_react() {
+  local project=$1
+  local template=$2
+
+  if [[ -n "$project" && -n "$template" ]]; then
+	  command npx create-react-app $project --template $template  # with TS
+  elif [ -n "$project" ]; then
+	  command npx create-react-app $project # JS for default
+  else
+	  exception
+  fi
+}
+
+# initialize Node project with ExpressJS
+mk_node() {
+  local dir=$1
+  if [ -n "$dir" ]; then
+	  mkdir $dir && cd $dir && command npm init -y && touch "index.js" && command npm install "express.js"
+  else
+	  exception
+  fi
 }
 
 # grep search `process_name`
