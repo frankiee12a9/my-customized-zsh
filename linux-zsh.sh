@@ -9,14 +9,6 @@ export PATH=$HOME/bin:/usr/local/bin:$PATH:$HOME/.local/bin
 export FZF_BASE=/path/to/fzf/install/dir
 
 export FZF_BASE="/home/.fzf"
-# windows IPv4
-export win_ip=192.168.219.177
-# export win_ip=192.168.219.181
-
-export win_ipv6='fe80::a014:d415:b956:b411%13'
-export d_gateway=192.168.219.1
-
-alias win_info='echo " win_ip (Widows IPv4)\n win_ipv6 (Windows IPv6)\n d_gateway (get default gateway)" '
 
 ZSH_THEME="agnoster"
 
@@ -24,7 +16,7 @@ plugins=(
   git
   zsh-autosuggestions
   vi-mode
-  # history-substring-search
+  history-substring-search
   fzf
 )
 
@@ -143,6 +135,7 @@ HISTTIMEFORMAT="%Y-%m-%d %T "
 
 # lines number active history
 HISTSIZE=200
+
 # lines number of saved history
 HISTFILESIZE=200
 
@@ -160,7 +153,11 @@ clr='\[\033[00m\]'      # Reset
 # allow to use `vim` from command line
 set -o vi
 
-# use `function` (start)
+#------------ FUNCTION (start)
+
+exception() {
+	echo "EXCEPTION: invalid arguments. Type `my_alias` for manuals."
+}
 
 # grep search `process_name`
 hg() {
@@ -170,12 +167,9 @@ hg() {
 # git init
 git_init() {
     if [ -z "$1" ]; then
-        printf "%s\n" "Please provide a directory name.";
+		git init && touch README.md .gitignore LICENSE;
     else
-        mkdir $1;
-        cd $1;
-        pwd;
-        git init;
+        mkdir $1 && cd $1 && pwd && git init;
         touch README.md .gitignore LICENSE;
         echo "# $(basename $PWD)" >> readme.md
     fi
@@ -188,6 +182,7 @@ git_br() {
     fi
 }
 
+# basic HTTP request with CURL
 curl_do() {
   local method=$1 
   local url=$2 
@@ -210,6 +205,7 @@ curl_do() {
   esac
 }
 
+# find and remove file/fodler
 find_rm() {
   local dir=$1
   local type=$2
@@ -228,18 +224,19 @@ find_rm() {
   esac
 }
 
+# get tree structure of folder
 dir_tree() {
   find $1 -print | sed -e 's;[^/]*/;|____;g;s;____|; |;g'
 }
 
-# get only PID from given port
+# get PID from given port
 pid() {
   local port=$1
   local process_id=$(lsof -t -i :${port}) # this also works (get PID alone, only PID)
   echo $process_id
 }
 
-# get very detailed about given port
+# get very detailed about the process running on given port
 p_info() {
    local port=$1
    # local process=$(lsof -i :${port} | tail -n +2 | awk '{ print $1" "$2" "$3" "$4" "$5 }') # get three columns
@@ -252,11 +249,11 @@ p_info() {
    echo $process
 }
 
+# find PID of particular process running on given port and kill it
 kill_port() {
   local port=$1
-  # local process_id=$(netstat -ano | grep :${port} | awk '{print $5}' | sed 's/[^0-9]*//g') # this done the work
-  local process_id=$(lsof -t -i :${port}) # this also works (get PID alone, only PID)
-  # local process_id=(lsof -i :${port} | tail -n +2 | awk '{ print $1}') # get first column
+  local process_id=$(lsof -t -i :${port}) #  (get PID alone, only PID)
+  # local process_id=(lsof -i :${port} | tail -n +2 | awk '{ print $1}') # get first one column
   # local process_id=(lsof -i :${port} | tail -n +2 | awk '{ print $1" "$2" "$3 }') # get two columns
   # local process_id=(lsof -i :${port} | tail -n +2 | awk '{ print $1" "$2" "$3 }') # get three columns
   
@@ -277,23 +274,19 @@ kill_port() {
   fi
 }
 
-scp_test() {
-  command scp -v "file.tar" cudayanh@192.168.0.100:/path/to/destination
-}
-
+# basic file transfer using SCP
 scp_do() {
   local file=$1
   local body=$2
   if [[ -n "$file" && -n "$host"  &&  -n "$path" ]]; then 
     command scp -v $file $body
-    # scp -v "file.tar" cudayanh@192.168.0.100:/path/to/destination
   else 
-    echo "ERROR: not valid arguments."
+    exception
 	echo "E.g. scp_do <file> <body>"
   fi
 }
 
-# compress files to *.tar
+# archiving file as *.tar and compress it using gzip
 targz_c() {
 	local name=$1
 	local dir=$2
@@ -302,12 +295,12 @@ targz_c() {
 	elif [ -n "$name" ]; then
 		command tar -czvf "${name}.tar.gz" 
 	else
-		echo "EXCEPTION: invalid arguments." 
+		exception
 		echo "E.g. tar_ <name> <dir>"
 	fi
 }
 
-# decompress files to *.tar
+# decompress files 
 targz_d() {
 	local name=$1
 	local dir=$2
@@ -317,18 +310,18 @@ targz_d() {
 	elif [ -n "$name" ]; then
 		command tar -xzf "${name}"
 	else
-		echo "EXCEPTION: invalid arguments."
+		exception
 		echo "E.g. tar_d <name> -C <dir>"
 	fi 
 }
 
+# install package 
 apt_i() {
 	local pkg=$1
 	if [ -n "$pkg" ]; then 
 		command sudo apt update && sudo apt-get install $pkg
 	else
-		echo "EXCEPTION: provide <package> to complete instalation."
-		return 1
+		exception
 	fi
 }
 
@@ -338,7 +331,7 @@ apt_rm() {
 	if [ -n "$pkg" ]; then 
 		command sudo apt remove $pkg
 	else
-		echo "EXCEPTION: invalid arguments."
+		exception
 		echo "E.g. apt_rm <package_name>"
 	fi
 }
@@ -353,9 +346,13 @@ disk_c() {
 	fi
 }
 
-# use `function` (end)
+#------------------ Function (end)
 
-# netstat
+
+#------------------ Alias (start)
+
+# NETSTAT
+
 # List TCP Listening ports && List all statistic of those ports
 alias tcp_active='echo "> Here are TCP Listening ports:\n" && netstat -at && echo "\n> Statistics for all ports:" && netstat -st' 
 
@@ -373,46 +370,46 @@ alias active_port='sudo lsof -i -P -n'
 # get currnet largest file
 alias largest_files='du -h -x -s -- * | sort -r -h | head -20'
 
+# get all current system users
 alias sys_users='cut -d: -f1 /etc/passwd | sort'
 
-# alias most_use_cmd=history | awk '{cmd[$2]++} END {for(elem in cmd) {print cmd[elem] " " elem}}' | sort -n -r | head -10 
-
-# View Git status.
+# view Git status
 alias gs='git status'
 
-# Add a file to Git.
+# add a file to Git
 alias ga='git add'
 
-# Add all files to Git.
+# add all files to Git
 alias gaa='git add --all'
 
-# Commit changes to the code.
+# commit changes to the code
 alias gc='git commit'
 
-# View the Git log.
+# view the Git log
 alias gl='git log --oneline'
 
-# git log pretty
+# git log pretty with format
 alias glp='git log --pretty=format:"%h - %an, %ar : %s"'
 
-# Create a new Git branch and move to the new branch at the same time. 
+# create a new Git branch and move to the new branch at the same time 
 alias gb='git checkout -b'
 
-# View the difference.
+# view the difference
 alias gd='git diff'
 
-# Press c to clear the terminal screen.
+# press c to clear the terminal screen
 alias c='clear'
 
-# Press h to view the bash history.
+# press h to view the bash history
 alias h='history'
 
-# Display the directory structure better.
+# display the directory structure better
 alias tree='tree --dirsfirst -F'
 
-# Make a directory and all parent directories with verbosity.
+# make a directory and all parent directories with verbosity
 alias mkdir='mkdir -p -v'
 
+# check all current installed packges
 alias apt_l='echo "Here are your installed packages\n:" && apt list --installed'
 
 # view specific calendar 
@@ -476,5 +473,5 @@ alias my_alias='echo "
   $ nov: ... \n
   $ dec: ... \n
 "'
-# personal customization (END)
+#------------ Alias (END)
 
